@@ -56,13 +56,40 @@ def validate(data):
     return validator.is_valid(data)
 
 
-@rules.rule('identifier')
-def identifier(path, value):
-    """Transform identifier."""
-    return E.identifier(
-        value['identifier'],
-        identifierType=value['identifierType']
-    )
+@rules.rule('identifiers')
+def identifiers(root, values):
+    """Transform identifiers to alternateIdenftifiers and identifier."""
+    """
+    We assume there will only be 1 DOI identifier for the record.
+    Any other identifiers are alternative identifiers.
+    """
+    root = ''
+    doi = ''
+    for value in values:
+        print(value['identifierType'])
+        print(value['identifierType'] == 'DOI')
+        if value['identifierType'] == 'DOI':
+            if doi != '':
+                #Don't know what to do with two DOIs
+                #Which is the actual identifier?
+                raise TypeError
+            doi = E.identifier(
+                value['identifier'],
+                identifierType='DOI'
+            )
+        else:
+            if root == '':
+                root = E.alternateIdentifiers()
+            elem = E.alternateIdentifier(value['identifier'])
+            elem.set('alternateIdentifierType', value['identifierType'])
+            root.append(elem)
+    print("LOOP")
+    print(root)
+    if root == '':
+        #If we only have the DOI
+        return doi
+    else:
+        return (root,doi)
 
 
 def affiliations(root, values):
@@ -229,21 +256,6 @@ def resource_type(path, value):
     elem.set('resourceTypeGeneral', value['resourceTypeGeneral'])
     elem.text = value['resourceType']
     return elem
-
-
-@rules.rule('alternateIdentifiers')
-def alternate_identifiers(path, values):
-    """Transform alternateIdenftifiers."""
-    if not values:
-        return
-
-    root = E.alternateIdentifiers()
-    for value in values:
-        elem = E.alternateIdentifier(value['alternateIdentifier'])
-        elem.set('alternateIdentifierType', value['alternateIdentifierType'])
-        root.append(elem)
-
-    return root
 
 
 @rules.rule('relatedIdentifiers')
