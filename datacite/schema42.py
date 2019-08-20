@@ -66,8 +66,6 @@ def identifiers(root, values):
     root = ''
     doi = ''
     for value in values:
-        print(value['identifierType'])
-        print(value['identifierType'] == 'DOI')
         if value['identifierType'] == 'DOI':
             if doi != '':
                 #Don't know what to do with two DOIs
@@ -83,8 +81,6 @@ def identifiers(root, values):
             elem = E.alternateIdentifier(value['identifier'])
             elem.set('alternateIdentifierType', value['identifierType'])
             root.append(elem)
-    print("LOOP")
-    print(root)
     if root == '':
         #If we only have the DOI
         return doi
